@@ -27,14 +27,16 @@ defmodule MsLuis do
       MsLuis.get_intent("turn off the lights")
       # {:ok, %{"topScoringIntent" => "lights_off", ...}}
   """
-  @spec get_intent(binary) :: {atom, map} | {:error, binary | atom}
-  def get_intent(query) do
+  @spec get_intent(binary, Keyword.t) :: {atom, map} | {:error, binary | atom}
+  def get_intent(query, config \\ []) do
     query = URI.encode(query)
     opts = []
+    updated_config =
+      Application.get_env(:ms_luis, :config)
+      |> Keyword.merge(config)
     
-    with config             <- Application.get_env(:ms_luis, :config),
-         {:ok, url}         <- build_url(config, query),
-         {:ok, merged_opts} <- build_opts(config, opts)
+    with {:ok, url}         <- build_url(updated_config, query),
+         {:ok, merged_opts} <- build_opts(updated_config, opts)
       do
       Ivar.new(:get, url, merged_opts)
       |> Ivar.send
